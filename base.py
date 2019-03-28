@@ -32,14 +32,15 @@ class BaseClassifier(object):
 
     def predict(self, X):
         m, n = X.shape
-        return self._predict(X).reshape(m, -1)
+        prob = self.predict_prob(X)
+        return (prob > 0.5).reshape(m, -1)
 
     @abstractmethod
     def _fit(self, X, y):
         pass
 
     @abstractmethod
-    def _predict(self, X):
+    def predict_prob(self, X):
         pass
 
 
@@ -90,9 +91,9 @@ class GDBinaryClassifier(BaseClassifier):
         self.cost_history_ = self._train(X.T, y.T)
         return self
 
-    def _predict(self, X):
+    def predict_prob(self, X):
         y_hat = self._get_pred(X.T)
-        return (y_hat.T > 0.5)
+        return y_hat.T
 
     @abstractmethod
     def _init_param(self, X, y):

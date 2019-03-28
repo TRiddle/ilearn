@@ -3,7 +3,7 @@ import numpy as np
 
 from ..base import BaseClassifier
 from ..utils.impurity import gini_impurity
-from ..utils.predict import predict_by_mode
+from ..utils.predict import predict_by_ratio
 
 
 class BaseStump(BaseClassifier):
@@ -13,7 +13,7 @@ class BaseStump(BaseClassifier):
         super(BaseStump, self).__init__()
         self.tag_list_ = [
             # cache
-            'lch_rows', 'rch_rows', 'lch_val', 'rch_val',
+            'lch_rows', 'rch_rows', 'lch_prob', 'rch_prob',
             'lch_score', 'rch_score',
             # useful
             'score', 'feat', 'thres'
@@ -45,23 +45,23 @@ class BaseStump(BaseClassifier):
                 self.param_['score'] = score
                 self.param_['feat'] = feat
                 self.param_['thres'] = thres
-        self.param_['lch_val'] = predict_by_mode(y, self.param_['lch_rows'])
-        self.param_['rch_val'] = predict_by_mode(y, self.param_['rch_rows'])
-
-    def _predict(self, X):
-        y_hat = np.zeros((X.shape[0], 1))
-        for i in range(X.shape[0]):
-            if self._data_in_left(X[i, :]):
-                y_hat[i, 0] = self.param_['lch_val']
-            else:
-                y_hat[i, 0] = self.param_['rch_val']
-        return y_hat
+        self.param_['lch_prob'] = predict_by_ratio(y, self.param_['lch_rows'])
+        self.param_['rch_prob'] = predict_by_ratio(y, self.param_['rch_rows'])
 
     def _fit(self, X, y, rows):
         if rows is None:
             rows = [r for r in range(X.shape[0])]
         self._train(X, y, rows)
         return self
+
+    def predict_prob(self, X):
+        y_hat = np.zeros((X.shape[0], 1))
+        for i in range(X.shape[0]):
+            if self._data_in_left(X[i, :]):
+                y_hat[i, 0] = self.param_['lch_prob']
+            else:
+                y_hat[i, 0] = self.param_['rch_prob']
+        return y_hat
 
     def _data_in_left(self, x):
         if x[self.param_['feat']] <= self.param_['thres']:

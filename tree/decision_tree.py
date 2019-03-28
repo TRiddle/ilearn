@@ -4,7 +4,7 @@ import numpy as np
 
 from ..base import BaseClassifier
 from .stump import GiniStump
-from ..utils.predict import predict_by_mode
+from ..utils.predict import predict_by_ratio
 
 
 class DecisionTree(BaseClassifier):
@@ -13,7 +13,7 @@ class DecisionTree(BaseClassifier):
                  class_weight=None, splitter='gini'):
         super(DecisionTree, self).__init__()
         self.tag_list_ = [
-            'stumps', 'val', 'lch', 'rch'
+            'stumps', 'prob', 'lch', 'rch'
         ]
         self.decisions_ = []
         self.max_depth_ = max_depth
@@ -38,10 +38,10 @@ class DecisionTree(BaseClassifier):
         self.node_cnt_ += 1
         return self.node_cnt_ - 1
 
-    def _dfs_fit(self, node_idx, depth, val, node_imp, rows, X, y):
+    def _dfs_fit(self, node_idx, depth, prob, node_imp, rows, X, y):
         for tag in self.tag_list_:
             self.param_[tag].append(None)
-        self.param_['val'][node_idx] = val
+        self.param_['prob'][node_idx] = prob
         # same y, pure
         if math.fabs(node_imp) < self.EPS_:
             return
@@ -56,25 +56,25 @@ class DecisionTree(BaseClassifier):
         self.param_['stumps'][node_idx] = s
         lch = self._new_idx()
         self.param_['lch'][node_idx] = lch
-        self._dfs_fit(lch, depth+1, s.param_['lch_val'],
+        self._dfs_fit(lch, depth+1, s.param_['lch_prob'],
                       s.param_['lch_score'], s.param_['lch_rows'], X, y)
         rch = self._new_idx()
         self.param_['rch'][node_idx] = rch
-        self._dfs_fit(rch, depth+1, s.param_['rch_val'],
+        self._dfs_fit(rch, depth+1, s.param_['rch_prob'],
                       s.param_['rch_score'], s.param_['rch_rows'], X, y)
 
     def _fit(self, X, y):
         self._init_param()
         rows = [r for r in range(X.shape[0])]
-        val = predict_by_mode(y, rows)
-        self._dfs_fit(self._new_idx(), 0, val, 1, rows, X, y)
+        prob = predict_by_ratio(y, rows)
+        self._dfs_fit(self._new_idx(), 0, prob, 1, rows, X, y)
         return self
 
-    def _predict(self, X):
+    def predict_prob(self, X):
         y_hat = np.zeros((X.shape[0], 1))
         for i in range(X.shape[0]):
             node_idx = 0
-            val = self.param_['val'][node_idx]
+            prob = self.param_['prob'][node_idx]
             while node_idx < self.node_cnt_:
                 s = self.param_['stumps'][node_idx]
                 if s is None:
@@ -83,14 +83,14 @@ class DecisionTree(BaseClassifier):
                     node_idx = self.param_['lch'][node_idx]
                 else:
                     node_idx = self.param_['rch'][node_idx]
-                val = self.param_['val'][node_idx]
-            y_hat[i, 0] = val
+                prob = self.param_['prob'][node_idx]
+            y_hat[i, 0] = prob
         return y_hat
 
     def _dfs_set_decisions(self, node_idx, decision):
         s = self.param_['stumps'][node_idx]
         if s is None:
-            decision['val'] = self.param_['val'][node_idx]
+            decision['prob'] = self.param_['prob'][node_idx]
             self.decisions_.append(copy.deepcopy(decision))
             return
         feat = s.param_['feat']
@@ -105,7 +105,7 @@ class DecisionTree(BaseClassifier):
         decision['path'].pop()
 
     def _set_decisions(self):
-        decision = {'path': [], 'val': None}
+        decision = {'path': [], 'prob': None}
         self._dfs_set_decisions(0, decision)
 
     def get_decisions(self):
