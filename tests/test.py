@@ -8,6 +8,7 @@ from ilearn.neural_network import NeuralNetwork
 from ilearn.tree import DecisionTree, GiniStump
 from ilearn.utils.make_data import make_linearly_separable_data
 
+
 X, y = make_linearly_separable_data()
 print(X.shape, y.shape)
 lr = LogisticRegression(alpha=1, reg_lambda=1, max_iter=100)
