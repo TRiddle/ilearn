@@ -4,6 +4,7 @@ from ..base import GDBinaryClassifier
 from ..utils.activation import sigmoid, sigmoid_grad
 from ..utils.cost_function import cross_entropy
 
+
 class LogisticRegression(GDBinaryClassifier):
 
     def __init__(self, alpha=0.1, reg_lambda=1, max_iter=100):

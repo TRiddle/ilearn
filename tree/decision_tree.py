@@ -49,7 +49,7 @@ class DecisionTree(BaseClassifier):
             return
         # try to split
         s = self._create_stump()
-        s.fit(X, y, rows)
+        s.fit(X, y, rows=rows)
         # same x, have not stumps
         if s.isnull():
             return
@@ -63,7 +63,7 @@ class DecisionTree(BaseClassifier):
         self._dfs_fit(rch, depth+1, s.param_['rch_prob'],
                       s.param_['rch_score'], s.param_['rch_rows'], X, y)
 
-    def _fit(self, X, y):
+    def _fit(self, X, y, **args):
         self._init_param()
         rows = [r for r in range(X.shape[0])]
         prob = predict_by_ratio(y, rows)

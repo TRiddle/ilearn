@@ -48,9 +48,12 @@ class BaseStump(BaseClassifier):
         self.param_['lch_prob'] = predict_by_ratio(y, self.param_['lch_rows'])
         self.param_['rch_prob'] = predict_by_ratio(y, self.param_['rch_rows'])
 
-    def _fit(self, X, y, rows):
-        if rows is None:
+    def _fit(self, X, y, **args):
+        rows = None
+        if 'rows' not in args:
             rows = [r for r in range(X.shape[0])]
+        else:
+            rows = args['rows']
         self._train(X, y, rows)
         return self
 
@@ -68,10 +71,6 @@ class BaseStump(BaseClassifier):
             return True
         else:
             return False
-
-    def fit(self, X, y, rows=None):
-        X, y = self.check_data(X, y)
-        return self._fit(X, y, rows)
 
     @abstractmethod
     def _score(self, y, lch_rows, rch_rows, feat, thres):

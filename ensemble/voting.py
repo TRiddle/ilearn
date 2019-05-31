@@ -11,7 +11,7 @@ class VotingClassifier(BaseClassifier):
         if voting not in ['soft', 'hard']:
             raise ValueError('\"{}\" is an invalid voting'.format(voting))
 
-    def _fit(self, X, y):
+    def _fit(self, X, y, **args):
         for name, clf in self.clfs_:
             clf.fit(X, y)
 

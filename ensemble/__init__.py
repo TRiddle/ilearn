@@ -1,4 +1,4 @@
-from .voting_classifier import VotingClassifier
+from .voting import VotingClassifier
 
 __all__ = [
     'VotingClassifier',
